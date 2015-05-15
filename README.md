@@ -1,4 +1,4 @@
-## Note to my peer reviewer ## 
+## Note to my peer reviewer
 
 Dear peer reviewer:
 

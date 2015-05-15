@@ -1,25 +1,165 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: 'Reproducible Research,  Project 1: Quantified Self'
+author: "Ne Obliviscaris"
+date: "May 12, 2015"
+output: html_document
 ---
 
-
 ## Loading and preprocessing the data
+The following code loads the required libraries and the data for analysis, previous decompression, into a data frame.
 
+```{r echo=TRUE, results='hide', message = FALSE, warning=FALSE}
+library("dplyr")
+library("ggplot2")
+library("lattice")
 
+activity_data <- read.csv(unz("activity.zip", "activity.csv"), header = TRUE);
+activity_data$date <- factor(activity_data$date);
+```
 
-## What is mean total number of steps taken per day?
+## What is the mean total number of steps taken per day ?
 
+1. Calculate the total number of steps taken per day. I achieved this by using the `aggregate` function.
 
+```{r echo=TRUE}
+total_steps_by_day <- aggregate(activity_data$steps, by=list(activity_data$date), FUN=sum);
+colnames(total_steps_by_day) <- c("date", "steps");
+```
+
+Which results in the following data:
+
+```{r kable, echo=TRUE}
+knitr::kable(total_steps_by_day, digits = 2, booktabs = TRUE, col.names = c("Date", "Total Steps"), fig.width=8);
+```
+
+2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
+
+```{r echo=TRUE}
+histinfo <- hist(total_steps_by_day$steps,  
+  col = "blue", 
+  xlab = "Number of Steps", 
+  ylab = "Frequency", 
+  main = "Number of Steps per day");
+```
+
+3. Calculate and report the mean and median of the total number of steps taken per day. For this part of the assignment, you can ignore the missing values in the dataset.
+
+```{r echo=TRUE}
+mean_total_number_of_steps_per_day <- mean(total_steps_by_day$steps, na.rm = TRUE);
+median_total_number_of_steps_per_day <- median(total_steps_by_day$steps, na.rm = TRUE);
+```
+
+**The mean is `r sprintf("%.2f", mean_total_number_of_steps_per_day)`**.
+**The median is `r sprintf("%.2f", median_total_number_of_steps_per_day)`**.
 
 ## What is the average daily activity pattern?
 
+```{r echo=TRUE}
+total_steps_by_interval <-
+  aggregate(activity_data$steps, by=list(activity_data$interval), FUN=mean, na.rm=TRUE);
+colnames(total_steps_by_interval) <- c("interval", "average_steps");
+```
 
+1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r echo=TRUE}
+plot(total_steps_by_interval$interval, total_steps_by_interval$average_steps, 
+  type="l", xlab= "Interval", ylab= "Average steps across all days", col="green" , lwd=2)
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r echo=TRUE}
+max_avg_steps_row <- total_steps_by_interval[which.max(total_steps_by_interval$average_steps),];
+```
+
+**The 5-minute interval with the maximum number of steps (on average across all days) is:
+`r max_avg_steps_row$interval` with a total of `r sprintf("%.2f", max_avg_steps_row$average_steps)`**.
 
 ## Imputing missing values
 
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r echo=TRUE}
+total_number_of_missing_values <- sum(is.na(activity_data$steps));
+```
+The **total number of missing values is `r total_number_of_missing_values`**.
 
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+Note to reader: I did follow the suggested strategy by 'joining' the data generated in the previous step, using the 'interval' as referential key.
+
+```{r echo=TRUE}
+activity_data_with_averages <- merge(x = activity_data, y = total_steps_by_interval, by = "interval");
+```
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r echo=TRUE}
+activity_data_adjusted <- activity_data_with_averages;
+activity_data_adjusted$steps <- ifelse(is.na(activity_data_adjusted$steps), activity_data_adjusted$average_steps, activity_data_adjusted$steps);
+```
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
+
+```{r echo=TRUE}
+adjusted_total_steps_by_day <- aggregate(activity_data_adjusted$steps, by=list(activity_data_adjusted$date), FUN=sum);
+colnames(adjusted_total_steps_by_day) <- c("date", "steps");
+```
+
+```{r echo=TRUE}
+histinfo <- hist(adjusted_total_steps_by_day$steps, 
+  col = "blue", 
+	xlab = "Number of Steps", 
+	ylab = "Frequency", 
+	main = "Adjusted number of Steps per day");
+```
+
+```{r echo=TRUE}
+adjusted_mean_total_number_of_steps_per_day <- mean(adjusted_total_steps_by_day$steps, na.rm = TRUE);
+adjusted_median_total_number_of_steps_per_day <- median(adjusted_total_steps_by_day$steps, na.rm = TRUE);
+```
+
+The mean after adjusting the NA values is `r sprintf("%.2f", adjusted_mean_total_number_of_steps_per_day)` (vs. `r sprintf("%.2f", mean_total_number_of_steps_per_day)`).
+
+The median after adjusting the NA values is `r sprintf("%.2f", adjusted_median_total_number_of_steps_per_day)` (vs. `r sprintf("%.2f", median_total_number_of_steps_per_day)`);
+
+Do these values differ from the estimates from the first part of the assignment? *Not the mean, the median does.*
+
+What is the impact of imputing missing data on the estimates of the total daily number of steps? *The frequency of the average number of days increases, since now there are more days for which the number of steps is that value we used to adjust to (the mean).*
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+```{r echo=TRUE}
+
+activity_data_adjusted$day_of_the_week <- weekdays(as.Date(activity_data_adjusted$date, "%Y-%m-%d"));
+activity_data_adjusted$day_of_the_week <- factor(activity_data_adjusted$day_of_the_week);
+activity_data_adjusted <- mutate(activity_data_adjusted, 
+  type_of_day = ifelse(day_of_the_week == "Sunday" | day_of_the_week == "Saturday", "weekend", "weekday"));
+activity_data_adjusted$type_of_day <- factor(activity_data_adjusted$type_of_day);
+```
+
+2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken,  averaged across all weekday days or weekend days (y-axis).
+
+```{r echo=TRUE}
+weekday_activity_data_adjusted <- activity_data_adjusted[activity_data_adjusted$type_of_day == "weekday",];
+weekday_total_steps_by_interval <- aggregate(weekday_activity_data_adjusted$steps, 
+	by=list(weekday_activity_data_adjusted$interval), FUN=mean, na.rm=TRUE);
+colnames(weekday_total_steps_by_interval) <- c("interval", "average_steps");
+weekday_total_steps_by_interval$type_of_day <- "weekday";
+
+weekend_activity_data_adjusted <- activity_data_adjusted[activity_data_adjusted$type_of_day == "weekend",];
+weekend_total_steps_by_interval <- aggregate(weekend_activity_data_adjusted$steps, 
+	by=list(weekend_activity_data_adjusted$interval), FUN=mean, na.rm=TRUE);
+colnames(weekend_total_steps_by_interval) <- c("interval", "average_steps");
+weekend_total_steps_by_interval$type_of_day <- "weekend";
+
+type_of_day_total_steps_by_interval <- rbind(weekday_total_steps_by_interval, weekend_total_steps_by_interval);
+type_of_day_total_steps_by_interval$type_of_day <- factor(type_of_day_total_steps_by_interval$type_of_day);
+```
+
+```{r echo=TRUE}
+xyplot(average_steps ~ interval|type_of_day,type_of_day_total_steps_by_interval, type="l");
+```
+
+*It is easy to observe that on weekend days the average of steps is lower. I decided to put the plots side by side (instead of stacked one on top of each other) because it is easier to observe that, in general, weekdays' averages are higher.*

@@ -1,3 +1,21 @@
+## Note to my peer reviewer:
+
+Dear peer reviewer:
+
+**NOTE**: Please consider two things when reviewing my work: 
+
+# The figures in my report are embedded in the HTML file (i.e. there is no separate folder with rendered *.gif/*.png/*.jpg files in the repository), 
+
+# Because the images are embedded in the HTML file, it is considerably big (for what GitHub accepts) and if you try to click on the HTML file Github will not let you see it rendered in your browser but will show you the 'raw' HTML instead; in order to visualize the HTML file, please use this URL http://rawgit.com/neobliviscaris/RepData_PeerAssessment1/master/PA1_template.html which is simply a direct link to the raw file as indicated in the top answer in this StackOverflow question http://stackoverflow.com/questions/6551446/can-i-run-html-files-directly-from-github-instead-of-just-viewing-their-source
+
+I took this class once before and this issue seemed to confuse my peer reviewers, resulting in my getting penalized. :(
+
+If, for whatever reason, you don't feel comfortable considering my work on the rawgit.com URL above, please right-click and download the HTML file and open it with your browser.
+
+Thank you!
+
+Ne Obliviscaris :)
+
 ## Introduction
 
 It is now possible to collect a large amount of data about personal
